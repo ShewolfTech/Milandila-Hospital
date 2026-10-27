@@ -81,15 +81,50 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Demo contact form behavior
-  document.querySelectorAll('.demo-form').forEach(form => {
-    form.addEventListener('submit', event => {
-      event.preventDefault();
-      const message = form.querySelector('.form-message');
-      if (message) {
-        message.textContent = 'Demo form submitted. Connect this form to Wix Forms or your approved submission service before launch.';
-        message.style.display = 'block';
+
+  const form = document.querySelector(".demo-form");
+  const formMessage = form.querySelector(".form-message");
+  const submitButton = form.querySelector('button[type="submit"]');
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const originalButtonText = submitButton.textContent;
+
+    submitButton.disabled = true;
+    submitButton.textContent = "Sending...";
+    formMessage.textContent = "";
+
+    try {
+      const response = await fetch(
+        "https://api.web3forms.com/submit",
+        {
+          method: "POST",
+          body: new FormData(form)
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(
+          result.message || "Unable to send your message."
+        );
       }
+
+      formMessage.textContent =
+        "Thank you! Your message has been sent successfully.";
+
       form.reset();
-    });
+    } catch (error) {
+      console.error("Form submission error:", error);
+
+      formMessage.textContent =
+        "Sorry, your message could not be sent. Please try again.";
+    } finally {
+      submitButton.disabled = false;
+      submitButton.textContent = originalButtonText;
+    }
   });
+
 });
